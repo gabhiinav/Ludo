@@ -68,7 +68,7 @@ const INITIAL_PLAYERS: Player[] = [
   },
 ];
 
-const TURN_ORDER: PlayerColor[] = ["red", "green", "yellow", "blue"];
+const TURN_ORDER: PlayerColor[] = ["red", "blue", "yellow", "green"];
 
 export function useLudoGame() {
   const [gameState, setGameState] = useState<GameState>({
@@ -97,26 +97,7 @@ export function useLudoGame() {
       const newValue = Math.floor(Math.random() * 6) + 1;
       
       setGameState((prev) => {
-        const currentPlayer = prev.players.find(p => p.color === prev.currentTurn)!;
-        const hasMoves = checkValidMoves(currentPlayer, newValue);
-        
-        console.log("Rolled:", newValue, "Player:", prev.currentTurn, "HasMoves:", hasMoves);
-
-        if (!hasMoves) {
-            console.log("No moves, auto-switching in 1s");
-            // Auto switch turn after a short delay if no moves
-            setTimeout(() => {
-                 setGameState(currentState => {
-                     const currentIndex = TURN_ORDER.indexOf(currentState.currentTurn);
-                     const nextIndex = (currentIndex + 1) % 4;
-                     return {
-                         ...currentState,
-                         currentTurn: TURN_ORDER[nextIndex],
-                         diceValue: null
-                     };
-                 });
-            }, 1000);
-        }
+        console.log("Rolled:", newValue, "Player:", prev.currentTurn);
 
         return {
           ...prev,
@@ -125,7 +106,7 @@ export function useLudoGame() {
         };
       });
     }, 1000);
-  }, [gameState.isRolling, gameState.diceValue, checkValidMoves]);
+  }, [gameState.isRolling, gameState.diceValue]);
 
   const switchTurn = useCallback(() => {
     setGameState((prev) => {
@@ -183,21 +164,41 @@ export function useLudoGame() {
     // Update state
     setGameState((prev) => {
       const newPlayers = [...prev.players];
+      let hasCaptured = false;
       
       // Handle Capturing
-      // Calculate global position of the moved token
-      // Only capture if on main path (not home stretch or base)
-      // And not on safe spots (optional, skipping safe spots for now for simplicity, or added later)
-      
-      // We need to know the global index to check for collision
-      // This logic is duplicated from Board.tsx, ideally should be shared or calculated here
-      // Let's just implement basic capturing: if land on opponent token on main path
-      
-      // Simplified capture logic:
-      // We need to calculate global index for collision detection
-      // But we don't have the easy mapping here without importing utils.
-      // Let's skip complex capture for this iteration to ensure basic flow works.
-      // Or we can import the utils.
+      if (newStatus === "active" && newPosition < 51) { // Only capture on main path
+          // Calculate global index for current player's move
+          const startIndices: Record<string, number> = {
+            red: 0,
+            blue: 13,
+            yellow: 26,
+            green: 39,
+          };
+          const currentGlobalIndex = (startIndices[playerColor] + newPosition) % 52;
+
+          // Check against all other players' active tokens
+          newPlayers.forEach((p, pIdx) => {
+              if (p.color !== playerColor) {
+                  p.tokens.forEach((t, tIdx) => {
+                      if (t.status === "active" && t.position < 51) {
+                          const otherGlobalIndex = (startIndices[p.color] + t.position) % 52;
+                          if (currentGlobalIndex === otherGlobalIndex) {
+                              // CAPTURE!
+                              console.log(`Captured ${p.color}'s token!`);
+                              hasCaptured = true;
+                              // Send opponent token back to base
+                              newPlayers[pIdx].tokens[tIdx] = {
+                                  ...t,
+                                  position: -1,
+                                  status: "base"
+                              };
+                          }
+                      }
+                  });
+              }
+          });
+      }
       
       newPlayers[playerIdx] = {
         ...player,
@@ -218,17 +219,35 @@ export function useLudoGame() {
           }
       }
 
-      return {
-        ...prev,
-        players: newPlayers,
-        diceValue: null, // Reset dice after move
-      };
+      // If captured or rolled 6, do NOT switch turn (bonus roll)
+      // But we need to reset diceValue to allow re-roll
+      const shouldSwitchTurn = !hasCaptured && gameState.diceValue !== 6;
+      
+      // If we are NOT switching turn, we just reset diceValue
+      // If we ARE switching turn, we do it in the effect or here?
+      // The switchTurn function updates state based on prev.
+      // Let's handle it here directly to avoid race conditions or multiple updates.
+      
+      if (shouldSwitchTurn) {
+          const currentIndex = TURN_ORDER.indexOf(prev.currentTurn);
+          const nextIndex = (currentIndex + 1) % 4;
+          return {
+            ...prev,
+            players: newPlayers,
+            currentTurn: TURN_ORDER[nextIndex],
+            diceValue: null,
+          };
+      } else {
+          // Bonus turn
+          return {
+              ...prev,
+              players: newPlayers,
+              diceValue: null,
+          };
+      }
     });
-
-    // Switch turn if not 6
-    if (gameState.diceValue !== 6) {
-      switchTurn();
-    }
+    
+    // We handled turn switching inside setGameState, so we remove the external switchTurn call
   }, [gameState, switchTurn]);
 
   const resetGame = useCallback(() => {
@@ -247,5 +266,6 @@ export function useLudoGame() {
     rollDice,
     moveToken,
     resetGame,
+    switchTurn,
   };
 }

@@ -1,5 +1,15 @@
 export type Coordinate = { row: number; col: number };
 
+export const getGlobalPathIndex = (player: string, position: number) => {
+  const startIndices: Record<string, number> = {
+    red: 0,
+    blue: 13,
+    yellow: 26,
+    green: 39,
+  };
+  return (startIndices[player] + position) % 52;
+};
+
 // Standard Ludo board is 15x15
 // Global path is 52 steps
 // Each player has a starting offset
@@ -24,27 +34,27 @@ export const HOME_STRETCH_COORDINATES: Record<string, Coordinate[]> = {
   red: [
     { row: 7, col: 1 }, { row: 7, col: 2 }, { row: 7, col: 3 }, { row: 7, col: 4 }, { row: 7, col: 5 }, { row: 7, col: 6 } // Home
   ],
-  green: [
+  blue: [
     { row: 1, col: 7 }, { row: 2, col: 7 }, { row: 3, col: 7 }, { row: 4, col: 7 }, { row: 5, col: 7 }, { row: 6, col: 7 }
   ],
   yellow: [
     { row: 7, col: 13 }, { row: 7, col: 12 }, { row: 7, col: 11 }, { row: 7, col: 10 }, { row: 7, col: 9 }, { row: 7, col: 8 }
   ],
-  blue: [
+  green: [
     { row: 13, col: 7 }, { row: 12, col: 7 }, { row: 11, col: 7 }, { row: 10, col: 7 }, { row: 9, col: 7 }, { row: 8, col: 7 }
   ],
 };
 
 export const BASE_COORDINATES: Record<string, Coordinate[]> = {
   red: [{ row: 2, col: 2 }, { row: 2, col: 3 }, { row: 3, col: 2 }, { row: 3, col: 3 }],
-  green: [{ row: 2, col: 11 }, { row: 2, col: 12 }, { row: 3, col: 11 }, { row: 3, col: 12 }],
+  blue: [{ row: 2, col: 11 }, { row: 2, col: 12 }, { row: 3, col: 11 }, { row: 3, col: 12 }],
   yellow: [{ row: 11, col: 11 }, { row: 11, col: 12 }, { row: 12, col: 11 }, { row: 12, col: 12 }],
-  blue: [{ row: 11, col: 2 }, { row: 11, col: 3 }, { row: 12, col: 2 }, { row: 12, col: 3 }],
+  green: [{ row: 11, col: 2 }, { row: 11, col: 3 }, { row: 12, col: 2 }, { row: 12, col: 3 }],
 };
 
 export const PLAYER_START_INDICES = {
   red: 0,
-  green: 13,
+  blue: 13,
   yellow: 26,
-  blue: 39,
+  green: 39,
 };

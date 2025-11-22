@@ -8,7 +8,7 @@ interface GameControlsProps {
 }
 
 export function GameControls({ game }: GameControlsProps) {
-  const { gameState, rollDice, resetGame } = game;
+  const { gameState, rollDice, resetGame, switchTurn } = game;
 
   if (gameState.winner) {
     return (
@@ -22,6 +22,18 @@ export function GameControls({ game }: GameControlsProps) {
       </Card>
     );
   }
+
+  const hasValidMoves = gameState.diceValue
+    ? gameState.players
+        .find((p) => p.color === gameState.currentTurn)
+        ?.tokens.some(
+          (t) =>
+            (t.status === "base" && gameState.diceValue === 6) ||
+            (t.status === "active" &&
+              gameState.diceValue !== null &&
+              t.position + gameState.diceValue <= 56)
+        )
+    : false;
 
   return (
     <Card className="flex flex-col items-center gap-6 p-6">
@@ -42,9 +54,17 @@ export function GameControls({ game }: GameControlsProps) {
         disabled={gameState.diceValue !== null || gameState.isRolling}
       />
 
+      {gameState.diceValue && !hasValidMoves && (
+        <Button onClick={switchTurn} variant="outline" className="w-full">
+          Pass Turn
+        </Button>
+      )}
+
       <div className="text-sm text-zinc-500">
         {gameState.diceValue
-          ? "Select a token to move"
+          ? hasValidMoves
+            ? "Select a token to move"
+            : "No valid moves"
           : "Roll the dice to start"}
       </div>
       

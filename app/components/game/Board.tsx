@@ -65,14 +65,14 @@ export function Board({ game }: BoardProps) {
           <div className="flex h-full w-full items-center justify-center rounded-lg bg-red-50 dark:bg-red-900/10" />
         </div>
 
-        {/* Top Right - Green Base */}
+        {/* Top Right - Blue Base */}
         <div className="col-span-6 row-span-6 bg-white p-4 dark:bg-zinc-950" style={{ gridColumn: "10 / span 6", gridRow: "1 / span 6" }}>
-          <div className="flex h-full w-full items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/10" />
+          <div className="flex h-full w-full items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/10" />
         </div>
 
-        {/* Bottom Left - Blue Base */}
+        {/* Bottom Left - Green Base */}
         <div className="col-span-6 row-span-6 bg-white p-4 dark:bg-zinc-950" style={{ gridColumn: "1 / span 6", gridRow: "10 / span 6" }}>
-          <div className="flex h-full w-full items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-900/10" />
+          <div className="flex h-full w-full items-center justify-center rounded-lg bg-green-50 dark:bg-green-900/10" />
         </div>
 
         {/* Bottom Right - Yellow Base */}
