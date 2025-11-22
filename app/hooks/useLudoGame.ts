@@ -97,7 +97,29 @@ export function useLudoGame() {
       const newValue = Math.floor(Math.random() * 6) + 1;
       
       setGameState((prev) => {
-        console.log("Rolled:", newValue, "Player:", prev.currentTurn);
+        const currentPlayer = prev.players.find(p => p.color === prev.currentTurn)!;
+        const hasMoves = checkValidMoves(currentPlayer, newValue);
+        
+        console.log("Rolled:", newValue, "Player:", prev.currentTurn, "HasMoves:", hasMoves);
+
+        if (!hasMoves) {
+            console.log("No moves, auto-switching in 1s");
+            // Auto switch turn after a short delay if no moves
+            setTimeout(() => {
+                 setGameState(currentState => {
+                     // Ensure we are still in the same state (diceValue matches) to avoid race conditions
+                     if (currentState.currentTurn !== prev.currentTurn) return currentState;
+                     
+                     const currentIndex = TURN_ORDER.indexOf(currentState.currentTurn);
+                     const nextIndex = (currentIndex + 1) % 4;
+                     return {
+                         ...currentState,
+                         currentTurn: TURN_ORDER[nextIndex],
+                         diceValue: null
+                     };
+                 });
+            }, 1000);
+        }
 
         return {
           ...prev,
@@ -106,7 +128,7 @@ export function useLudoGame() {
         };
       });
     }, 1000);
-  }, [gameState.isRolling, gameState.diceValue]);
+  }, [gameState.isRolling, gameState.diceValue, checkValidMoves]);
 
   const switchTurn = useCallback(() => {
     setGameState((prev) => {

@@ -54,17 +54,11 @@ export function GameControls({ game }: GameControlsProps) {
         disabled={gameState.diceValue !== null || gameState.isRolling}
       />
 
-      {gameState.diceValue && !hasValidMoves && (
-        <Button onClick={switchTurn} variant="outline" className="w-full">
-          Pass Turn
-        </Button>
-      )}
-
       <div className="text-sm text-zinc-500">
         {gameState.diceValue
           ? hasValidMoves
             ? "Select a token to move"
-            : "No valid moves"
+            : "No valid moves - Switching turn..."
           : "Roll the dice to start"}
       </div>
       
