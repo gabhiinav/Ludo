@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+import { isSafeSpot } from "@/app/components/game/board-utils";
 
 export type PlayerColor = "red" | "green" | "yellow" | "blue";
 export type GameStatus = "WAITING" | "PLAYING" | "FINISHED";
@@ -82,7 +83,7 @@ export function useLudoGame() {
 
   const checkValidMoves = useCallback((player: Player, diceRoll: number) => {
     return player.tokens.some((token) => {
-      if (token.status === "base") return diceRoll === 6;
+      if (token.status === "base") return diceRoll === 6 || diceRoll === 1;
       if (token.status === "active") return token.position + diceRoll <= 56;
       return false;
     });
@@ -162,9 +163,9 @@ export function useLudoGame() {
     let newPosition = token.position;
     let newStatus = token.status;
 
-    // Rule: Need 6 to leave base
+    // Rule: Need 6 or 1 to leave base
     if (token.status === "base") {
-      if (gameState.diceValue === 6) {
+      if (gameState.diceValue === 6 || gameState.diceValue === 1) {
         newPosition = 0;
         newStatus = "active";
       } else {
@@ -199,27 +200,32 @@ export function useLudoGame() {
           };
           const currentGlobalIndex = (startIndices[playerColor] + newPosition) % 52;
 
-          // Check against all other players' active tokens
-          newPlayers.forEach((p, pIdx) => {
-              if (p.color !== playerColor) {
-                  p.tokens.forEach((t, tIdx) => {
-                      if (t.status === "active" && t.position < 51) {
-                          const otherGlobalIndex = (startIndices[p.color] + t.position) % 52;
-                          if (currentGlobalIndex === otherGlobalIndex) {
-                              // CAPTURE!
-                              console.log(`Captured ${p.color}'s token!`);
-                              hasCaptured = true;
-                              // Send opponent token back to base
-                              newPlayers[pIdx].tokens[tIdx] = {
-                                  ...t,
-                                  position: -1,
-                                  status: "base"
-                              };
+          // Check if landing on a safe spot - if so, no capturing allowed
+          if (!isSafeSpot(currentGlobalIndex)) {
+              // Check against all other players' active tokens
+              newPlayers.forEach((p, pIdx) => {
+                  if (p.color !== playerColor) {
+                      p.tokens.forEach((t, tIdx) => {
+                          if (t.status === "active" && t.position < 51) {
+                              const otherGlobalIndex = (startIndices[p.color] + t.position) % 52;
+                              if (currentGlobalIndex === otherGlobalIndex) {
+                                  // CAPTURE!
+                                  console.log(`Captured ${p.color}'s token!`);
+                                  hasCaptured = true;
+                                  // Send opponent token back to base
+                                  newPlayers[pIdx].tokens[tIdx] = {
+                                      ...t,
+                                      position: -1,
+                                      status: "base"
+                                  };
+                              }
                           }
-                      }
-                  });
-              }
-          });
+                      });
+                  }
+              });
+          } else {
+              console.log(`Landed on safe spot at global index ${currentGlobalIndex} - no capturing allowed`);
+          }
       }
       
       newPlayers[playerIdx] = {
